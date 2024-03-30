@@ -1,0 +1,65 @@
+{# index.twig #}
+<h1>BBS</h1>
+
+<h2>書き込み</h2>
+{% if true == error.title %}タイトルは必須入力です。<br>{% endif %}
+{% if true == error.body %}本文は必須入力です。<br>{% endif %}
+<form action="./write.php" method="post">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  名前:<input name="handle" value="{{ datum.handle }}"><br>
+  タイトル:<input name="title" value="{{ datum.title }}"><br>
+  削除コード:<input name="del_code" value="{{ datum.del_code }}"><br>
+  本文:<textarea name="body">{{ datum.body }}</textarea><br>
+  <button>投稿する</button>
+</form>
+
+<h2>一覧</h2>
+{% if session.delete_success == true %}投稿を削除しました。<br>{% endif %}
+{% if session.delete_failure == true %}投稿削除に失敗しました。<br>{% endif %}
+
+{% if true == error.comment_body_empty %}コメントを入力してください。<br>{% endif %}
+{% if true == error.comment_body_max_length %}コメントが長すぎます。300文字以内にしてください。<br>{% endif %}
+
+{{ page }}ページ目<br>
+<hr>
+{% for val in list %}
+<a name="{{ val.bbs_id }}"></a>
+{{ val.title }}：{{ val.handle }}({{ val.created_at | date("Y-m-d H:i") }})<br>
+<form action="./delete.php" method="post">
+  <input type="hidden" name="bbs_id" value="{{ val.bbs_id }}">
+  削除コード:<input name="del_code">
+  <button>削除</button>
+</form>
+{{ val.body | nl2br }}
+<hr width="60%">
+<form action="./comment.php" method="post">
+  <input type="hidden" name="bbs_id" value="{{ val.bbs_id }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <input type="hidden" name="p" value="{{ page }}">
+  <input name="comment">
+  <button>コメントする</button>
+</form>
+  {% for com in val.comments %}
+    {{ com.comment_body }}({{ com.created_at | date("Y-m-d H:i") }})<br>
+  {% endfor %}
+<hr>
+{% endfor %}
+
+{#  #}
+{% if page != 1 %}
+    <a href="./?p=1">最初のページ</a>
+{% else %}
+    最初のページ
+{% endif %}
+ | 
+{% if before_page_num != 0 %}
+    <a href="./?p={{ before_page_num|url_encode }}">次へ(より未来の投稿)</a>
+{% else %}
+    次へ(より未来の投稿)
+{% endif %}
+ | 
+{% if next_flg == true %}
+    <a href="./?p={{ next_page_num|url_encode }}">前へ(より過去の投稿)</a>
+{% else %}
+    前へ(より過去の投稿)
+{% endif %}
